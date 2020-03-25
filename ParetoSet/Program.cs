@@ -5,10 +5,20 @@ namespace ParetoSet
 {
     public class Program
     {
+        private static bool? Flag;
+        private static List<int> Weights;
         private static void Main()
         {
+            //Выбор режима работы
+            SetFlag();
+            if (Flag is null) goto end;
+
             //Ввод количества критериев
             var critCnt = FillCritCnt();
+
+            //Ввод весов критериев
+            if (Flag is true) FillWeights(critCnt);
+
             //Ввод количества векторов
             var vectorCnt = FillCaseCnt();
             //Ввод значений векторов
@@ -17,12 +27,15 @@ namespace ParetoSet
             var paretoSet = GetParetoSet(matrix);
             //Вывод результата
             Console.WriteLine("Результат: ");
+            if (Flag is true) Console.WriteLine("Элементы векторов домножены на веса");
             for (int i = 0; i < paretoSet.Count; i++)
             {
                 Console.Write($"Вектор {i + 1}: (");
                 Console.Write(string.Join(", ", paretoSet[i]));
                 Console.WriteLine(")");
             }
+
+        end:
             Console.WriteLine("Завершение работы программы, нажмите любую клавишу...");
             Console.ReadLine();
         }
@@ -70,6 +83,7 @@ namespace ParetoSet
                     Console.WriteLine($"Заполните критерий {j + 1}");
                     if (int.TryParse(Console.ReadLine(), out int result))
                     {
+                        if (Flag is true) result *= Weights[j];
                         currentVector.Add(result);
                     }
                     else
@@ -148,5 +162,35 @@ namespace ParetoSet
                 sum += element;
             return sum;
         }
+
+        private static void SetFlag()
+        {
+            Console.WriteLine("Выберете режим работы:");
+            Console.WriteLine("1. Алгоритм Парето");
+            Console.WriteLine("2. Сужение множества Парето");
+            Console.WriteLine("Для выбора введите 1 или 2 соответственно, ввод других символов приведет к завершению работы");
+            string input = Console.ReadLine().Trim();
+            if (input == "1") Flag = false;
+            else if (input == "2") Flag = true;
+            else Flag = null;
+        }
+
+        private static void FillWeights(int critCnt)
+        {
+            Weights = new List<int>();
+            for (int i = 0; i < critCnt; i++)
+            {
+                Console.WriteLine($"Введите вес критерия номер {i + 1}") ;
+                if (int.TryParse(Console.ReadLine(), out int input))
+                    Weights.Add(input);
+                else
+                {
+                    Console.WriteLine("Некорректный ввод");
+                    i -= 1;
+                    continue;
+                }
+            }
+        }
+
     }
 }
