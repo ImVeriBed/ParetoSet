@@ -5,7 +5,7 @@ namespace ParetoSet
 {
     public class Program
     {
-        private static bool? Flag;
+        private static Regims? Flag;
         private static List<int> Weights;
         private static void Main()
         {
@@ -17,7 +17,7 @@ namespace ParetoSet
             var critCnt = FillCritCnt();
 
             //Ввод весов критериев
-            if (Flag is true) FillWeights(critCnt);
+            if (Flag == Regims.Сужение_множества_Парето) FillWeights(critCnt);
 
             //Ввод количества векторов
             var vectorCnt = FillCaseCnt();
@@ -27,7 +27,7 @@ namespace ParetoSet
             var paretoSet = GetParetoSet(matrix);
             //Вывод результата
             Console.WriteLine("Результат: ");
-            if (Flag is true) Console.WriteLine("Элементы векторов домножены на веса");
+            if (Flag == Regims.Сужение_множества_Парето) Console.WriteLine("Элементы векторов домножены на веса");
             for (int i = 0; i < paretoSet.Count; i++)
             {
                 Console.Write($"Вектор {i + 1}: (");
@@ -83,7 +83,7 @@ namespace ParetoSet
                     Console.WriteLine($"Заполните критерий {j + 1}");
                     if (int.TryParse(Console.ReadLine(), out int result))
                     {
-                        if (Flag is true) result *= Weights[j];
+                        if (Flag == Regims.Сужение_множества_Парето) result *= Weights[j];
                         currentVector.Add(result);
                     }
                     else
@@ -170,9 +170,26 @@ namespace ParetoSet
             Console.WriteLine("2. Сужение множества Парето");
             Console.WriteLine("Для выбора введите 1 или 2 соответственно, ввод других символов приведет к завершению работы");
             string input = Console.ReadLine().Trim();
-            if (input == "1") Flag = false;
-            else if (input == "2") Flag = true;
-            else Flag = null;
+            if (!int.TryParse(input, out int reg))
+            {
+                Flag = null;
+                return;
+            }
+            switch (reg)
+            {
+                case 1:
+                    Flag = Regims.Алгоритм_Парето;
+                    break;
+                case 2:
+                    Flag = Regims.Сужение_множества_Парето;
+                    break;
+                case 3:
+                    Flag = Regims.Целевое_программирование;
+                    break;
+                default:
+                    Flag = null;
+                    break;
+            }
         }
 
         private static void FillWeights(int critCnt)
@@ -191,6 +208,14 @@ namespace ParetoSet
                 }
             }
         }
+
+        public enum Regims
+        {
+            Алгоритм_Парето,
+            Сужение_множества_Парето,
+            Целевое_программирование
+        }
+
 
     }
 }
