@@ -17,22 +17,31 @@ namespace ParetoSet
             var critCnt = FillCritCnt();
 
             //Ввод весов критериев
-            if (Flag == Regims.Сужение_множества_Парето) FillWeights(critCnt);
+            if (Flag == Regims.Сужение_множества_Парето || Flag == Regims.Целевое_программирование)
+            {
+                FillWeights(critCnt);
+            }
 
             //Ввод количества векторов
             var vectorCnt = FillCaseCnt();
             //Ввод значений векторов
-            var matrix = FillMatrix(critCnt, vectorCnt);
-            //Реализация алгоритма
-            var paretoSet = GetParetoSet(matrix);
-            //Вывод результата
-            Console.WriteLine("Результат: ");
-            if (Flag == Regims.Сужение_множества_Парето) Console.WriteLine("Элементы векторов домножены на веса");
-            for (int i = 0; i < paretoSet.Count; i++)
+            var matrix = FillMatrix(critCnt, vectorCnt);          
+          
+            if (Flag == Regims.Сужение_множества_Парето || Flag == Regims.Алгоритм_Парето)
             {
-                Console.Write($"Вектор {i + 1}: (");
-                Console.Write(string.Join(", ", paretoSet[i]));
-                Console.WriteLine(")");
+                Console.WriteLine("Результат: ");
+                var paretoSet = GetParetoSet(matrix);
+                if (Flag == Regims.Сужение_множества_Парето) Console.WriteLine("Элементы векторов домножены на веса");
+                for (int i = 0; i < paretoSet.Count; i++)
+                {
+                    Console.Write($"Вектор {i + 1}: (");
+                    Console.Write(string.Join(", ", paretoSet[i]));
+                    Console.WriteLine(")");
+                }
+            }
+            else if (Flag == Regims.Целевое_программирование)
+            {
+                TargetProgramming(matrix, critCnt);
             }
 
         end:
@@ -83,7 +92,11 @@ namespace ParetoSet
                     Console.WriteLine($"Заполните критерий {j + 1}");
                     if (int.TryParse(Console.ReadLine(), out int result))
                     {
-                        if (Flag == Regims.Сужение_множества_Парето) result *= Weights[j];
+                        if (Flag == Regims.Сужение_множества_Парето || Flag == Regims.Целевое_программирование)
+                        {
+                            result *= Weights[j];
+                        }
+
                         currentVector.Add(result);
                     }
                     else
@@ -168,7 +181,8 @@ namespace ParetoSet
             Console.WriteLine("Выберете режим работы:");
             Console.WriteLine("1. Алгоритм Парето");
             Console.WriteLine("2. Сужение множества Парето");
-            Console.WriteLine("Для выбора введите 1 или 2 соответственно, ввод других символов приведет к завершению работы");
+            Console.WriteLine("3. Целевое программирование");
+            Console.WriteLine("Для выбора введите 1, 2 или 3 соответственно, ввод других символов приведет к завершению работы");
             string input = Console.ReadLine().Trim();
             if (!int.TryParse(input, out int reg))
             {
@@ -207,6 +221,45 @@ namespace ParetoSet
                     continue;
                 }
             }
+        }
+
+        private static void TargetProgramming(List<List<int>> matrix, int critCnt)
+        {
+            var zetSet = new List<double>();
+            double result = 0;
+
+            for (int i = 0; i < critCnt; i++)
+            {
+                Console.WriteLine($"Введите z[{i + 1}]");
+                if (double.TryParse(Console.ReadLine(), out double input))
+                    zetSet.Add(input);
+                else
+                {
+                    Console.WriteLine("Некорректный ввод");
+                    i -= 1;
+                    continue;
+                }
+            }
+
+            int number = 0;
+            for (int j = 0; j < matrix.Count; j++)
+            {
+                double localResult = 0;               
+                for (int i = 0; i < matrix[j].Count; i++)
+                {
+                    localResult += Math.Pow(matrix[j][i] - zetSet[i], 2);
+                }
+
+                if (localResult > result)
+                {
+                    result = localResult;
+                    number = j;
+                }
+            }
+
+            Console.WriteLine($"Победил вектор {number}");
+            Console.WriteLine(string.Join(", ", matrix[number]));
+            Console.WriteLine($"Результат: sqrt({result}) = {Math.Sqrt(result)}");
         }
 
         public enum Regims
