@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using Mapack;
 
 namespace ParetoSet
 {
     public class Program
     {
         private static Regims? Flag;
-        private static List<int> Weights;
+        private static List<double> Weights;
         private static void Main()
         {
             //Выбор режима работы
@@ -23,7 +24,12 @@ namespace ParetoSet
             }
 
             //Ввод количества векторов
-            var vectorCnt = FillCaseCnt();
+            int vectorCnt = critCnt;
+            if (Flag != Regims.Метод_анализа_иерархий)
+            {
+                vectorCnt = FillCaseCnt();
+            }
+
             //Ввод значений векторов
             var matrix = FillMatrix(critCnt, vectorCnt);          
           
@@ -41,7 +47,11 @@ namespace ParetoSet
             }
             else if (Flag == Regims.Целевое_программирование)
             {
-                TargetProgramming(matrix, critCnt);
+                ЦелевоеПрограммирование(matrix, critCnt);
+            }
+            else if (Flag == Regims.Метод_анализа_иерархий)
+            {
+                МетодАнализаИерархий(matrix);
             }
 
         end:
@@ -79,18 +89,18 @@ namespace ParetoSet
             }
         }
 
-        private static List<List<int>> FillMatrix(int critCnt, int vectorCnt)
+        private static List<List<double>> FillMatrix(int critCnt, int vectorCnt)
         {
-            var resultSet = new List<List<int>>();
+            var resultSet = new List<List<double>>();
             for (int i = 0; i < vectorCnt; i++)
             {
-                var currentVector = new List<int>();
+                var currentVector = new List<double>();
                 Console.WriteLine($"Заполните вектор {i + 1} (через Enter)");
                 for (int j = 0; j < critCnt; j++)
                 {
                 error:
                     Console.WriteLine($"Заполните критерий {j + 1}");
-                    if (int.TryParse(Console.ReadLine(), out int result))
+                    if (double.TryParse(Console.ReadLine(), out double result))
                     {
                         if (Flag == Regims.Сужение_множества_Парето || Flag == Regims.Целевое_программирование)
                         {
@@ -110,9 +120,9 @@ namespace ParetoSet
             return resultSet;
         }
 
-        private static List<List<int>> GetParetoSet(List<List<int>> matrix)
+        private static List<List<double>> GetParetoSet(List<List<double>> matrix)
         {
-            var paretoSet = new List<List<int>>();
+            var paretoSet = new List<List<double>>();
             matrix.ForEach(v => paretoSet.Add(v));
             int i = 0;
             int j = 1;
@@ -168,9 +178,9 @@ namespace ParetoSet
 
         }
 
-        private static int GetSumOfVector(List<int> vector)
+        private static double GetSumOfVector(List<double> vector)
         {
-            int sum = 0;
+            double sum = 0;
             foreach (var element in vector)
                 sum += element;
             return sum;
@@ -182,7 +192,8 @@ namespace ParetoSet
             Console.WriteLine("1. Алгоритм Парето");
             Console.WriteLine("2. Сужение множества Парето");
             Console.WriteLine("3. Целевое программирование");
-            Console.WriteLine("Для выбора введите 1, 2 или 3 соответственно, ввод других символов приведет к завершению работы");
+            Console.WriteLine("4. Метод анализа иерархий");
+            Console.WriteLine("Для выбора введите 1, 2, 3 или 4 соответственно, ввод других символов приведет к завершению работы");
             string input = Console.ReadLine().Trim();
             if (!int.TryParse(input, out int reg))
             {
@@ -200,6 +211,9 @@ namespace ParetoSet
                 case 3:
                     Flag = Regims.Целевое_программирование;
                     break;
+                case 4:
+                    Flag = Regims.Метод_анализа_иерархий;
+                    break;
                 default:
                     Flag = null;
                     break;
@@ -208,11 +222,11 @@ namespace ParetoSet
 
         private static void FillWeights(int critCnt)
         {
-            Weights = new List<int>();
+            Weights = new List<double>();
             for (int i = 0; i < critCnt; i++)
             {
                 Console.WriteLine($"Введите вес критерия номер {i + 1}") ;
-                if (int.TryParse(Console.ReadLine(), out int input))
+                if (double.TryParse(Console.ReadLine(), out double input))
                     Weights.Add(input);
                 else
                 {
@@ -223,7 +237,7 @@ namespace ParetoSet
             }
         }
 
-        private static void TargetProgramming(List<List<int>> matrix, int critCnt)
+        private static void ЦелевоеПрограммирование(List<List<double>> matrix, int critCnt)
         {
             var zetSet = new List<double>();
             double result = 0;
@@ -262,11 +276,100 @@ namespace ParetoSet
             Console.WriteLine($"Результат: sqrt({result}) = {Math.Sqrt(result)}");
         }
 
+        private static void МетодАнализаИерархий(List<List<double>> matrix)
+        {
+            Matrix A = GetMatrixFromListOfLists(matrix);
+            Console.WriteLine("Введенная матрица:");
+            PrintMatrix(A);
+            Console.WriteLine();
+
+            var eigen = new EigenvalueDecomposition(A);
+            double Lmax = 0;
+            Console.WriteLine("Корни характеристического уравнения:");
+            foreach (var item in eigen.RealEigenvalues)
+            {
+                Console.WriteLine(item.ToString("0.00"));
+                Lmax = item > Lmax ? item : Lmax;
+            }
+
+            Console.WriteLine("Максимальный корень из найденных: " + Lmax.ToString("0.00"));
+            Console.WriteLine();
+            var CI = (Lmax - A.Columns) / (A.Columns - 1);
+            Console.WriteLine("Индекс совместности: " + CI.ToString("0.00"));
+            Console.WriteLine();
+            if (CI > 0.1)
+            {
+                Console.WriteLine("Ошибка: Индекс совместности системы > 0.1");
+                return;
+            }
+
+            // новое значение диагонального элемента матрицы
+            for (int d = 0; d < A.Columns; d++)
+            {
+                A[d, d] = 1 - Lmax;
+            }
+
+            Console.WriteLine("Полученная матрица для составления однородной СЛАУ");
+            PrintMatrix(A);
+
+            // решить систему уравнений
+            var B = new Matrix(A.Rows, 1);
+            for (int i = 0; i < A.Rows; i++)
+            {
+                B[i, 0] = Math.Pow(0.1, 2);
+            }
+
+            var W = A.Solve(B);
+            // нормировать полученные значения
+            var summa = 0.0;
+
+            for (int i = 0; i < A.Rows; i++)
+                summa += Math.Round(W[i, 0], 2);
+
+            for (int i = 0; i < A.Rows; i++)
+                W[i, 0] = Math.Round(W[i, 0] / summa, 2);
+
+            Console.WriteLine("Искомый нормированный весовой вектор:");
+            PrintMatrix(W);
+        }
+
+        /// <summary>
+        /// Костыль для преобразования List<List<double>> в объект Matrix
+        /// </summary>
+        private static Matrix GetMatrixFromListOfLists(List<List<double>> matrix)
+        {
+            var mtrx = new Matrix(matrix.Count, matrix[0].Count);
+
+            for (int i = 0; i < matrix.Count; i++)
+            {
+                for (int j = 0; j < matrix[i].Count; j++)
+                {
+                    mtrx[i, j] = Math.Round(matrix[i][j], 2);
+                }
+            }
+
+            return mtrx;
+        }
+
+        private static void PrintMatrix(Matrix matrix)
+        {
+            for (int i = 0; i < matrix.Rows; i++)
+            {
+                for (int j = 0; j < matrix.Columns; j++)
+                {
+                    Console.Write(matrix[i, j].ToString("0.00") + "  ");
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine();
+        }
+
         public enum Regims
         {
             Алгоритм_Парето,
             Сужение_множества_Парето,
-            Целевое_программирование
+            Целевое_программирование,
+            Метод_анализа_иерархий
         }
 
 
