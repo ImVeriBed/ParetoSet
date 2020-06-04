@@ -319,8 +319,9 @@ namespace ParetoSet
                 B[i, 0] = Math.Pow(0.1, 2);
             }
 
-            var W = A.Solve(B);
             // нормировать полученные значения
+            var W = A.Solve(B);
+            
             var summa = 0.0;
 
             for (int i = 0; i < A.Rows; i++)
