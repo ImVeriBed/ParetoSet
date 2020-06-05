@@ -18,7 +18,7 @@ namespace ParetoSet
             var critCnt = FillCritCnt();
 
             //Ввод весов критериев
-            if (Flag == Regims.Сужение_множества_Парето || Flag == Regims.Целевое_программирование)
+            if (Flag == Regims.Сужение_множества_Парето || Flag == Regims.Целевое_программирование || Flag == Regims.Подход_MAUT)
             {
                 FillWeights(critCnt);
             }
@@ -52,6 +52,10 @@ namespace ParetoSet
             else if (Flag == Regims.Метод_анализа_иерархий)
             {
                 МетодАнализаИерархий(matrix);
+            }
+            else if (Flag == Regims.Подход_MAUT)
+            {
+                MAUT(matrix);
             }
 
         end:
@@ -193,7 +197,8 @@ namespace ParetoSet
             Console.WriteLine("2. Сужение множества Парето");
             Console.WriteLine("3. Целевое программирование");
             Console.WriteLine("4. Метод анализа иерархий");
-            Console.WriteLine("Для выбора введите 1, 2, 3 или 4 соответственно, ввод других символов приведет к завершению работы");
+            Console.WriteLine("5. Подход MAUT");
+            Console.WriteLine("Для выбора введите 1, 2, 3, 4 или 5 соответственно, ввод других символов приведет к завершению работы");
             string input = Console.ReadLine().Trim();
             if (!int.TryParse(input, out int reg))
             {
@@ -213,6 +218,9 @@ namespace ParetoSet
                     break;
                 case 4:
                     Flag = Regims.Метод_анализа_иерархий;
+                    break;
+                case 5:
+                    Flag = Regims.Подход_MAUT;
                     break;
                 default:
                     Flag = null;
@@ -365,12 +373,27 @@ namespace ParetoSet
             Console.WriteLine();
         }
 
+        private static void MAUT(List<List<double>> matrix)
+        {
+            //Транспонируем матрицу для облегчения нахождения коэффициентов
+            //ar matrixTrans = GetMatrixFromListOfLists(matrix).Transpose();
+
+            for (int i = 0; i < matrixTrans; i++)
+            {
+                for (int j = 0; j < length; j++)
+                {
+
+                }
+            }
+        }
+
         public enum Regims
         {
             Алгоритм_Парето,
             Сужение_множества_Парето,
             Целевое_программирование,
-            Метод_анализа_иерархий
+            Метод_анализа_иерархий,
+            Подход_MAUT
         }
 
 
