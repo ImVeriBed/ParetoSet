@@ -375,16 +375,47 @@ namespace ParetoSet
 
         private static void MAUT(List<List<double>> matrix)
         {
-            //Транспонируем матрицу для облегчения нахождения коэффициентов
-            //ar matrixTrans = GetMatrixFromListOfLists(matrix).Transpose();
+            //транспонируем матрицу для облегчения нахождения коэффициентов
+            var mtrx = GetMatrixFromListOfLists(matrix);
+            Console.WriteLine("Введена матрица:");
+            PrintMatrix(mtrx);
 
-            for (int i = 0; i < matrixTrans; i++)
+            var matrixTrans = mtrx.Transpose();
+
+            for (int i = 0; i < matrixTrans.Rows; i++)
             {
-                for (int j = 0; j < length; j++)
+                Console.WriteLine("Обработка стобца: " + (i + 1));
+                for (int j = 0; j < matrixTrans.Columns; j++)
                 {
+                    Console.WriteLine("Введите значение функции полезности для элемента " + matrixTrans[i, j]);
 
+                    string input = Console.ReadLine();
+                    if (!double.TryParse(input, out double result))
+                    {
+                        Console.WriteLine("Ввод некорректен");
+                        j -= 1;
+                        continue;
+                    }
+                    matrixTrans[i, j] = result;
                 }
             }
+
+            mtrx = matrixTrans.Transpose();
+            var finalResult = new List<double>();
+
+            Console.WriteLine("Умножение на веса критериев...");
+            for (int i = 0; i < mtrx.Rows; i++)
+            {
+                double sum = 0;
+                for (int j = 0; j < mtrx.Columns; j++)
+                {
+                    sum += mtrx[i, j] * Weights[j];
+                }
+                finalResult.Add(sum);
+            }
+            Console.WriteLine("Результаты: ");
+            int k = 0;
+            finalResult.ForEach(f => Console.WriteLine($"U({k++}) = {f}"));
         }
 
         public enum Regims
