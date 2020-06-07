@@ -18,7 +18,7 @@ namespace ParetoSet
             var critCnt = FillCritCnt();
 
             //Ввод весов критериев
-            if (Flag == Regims.Сужение_множества_Парето || Flag == Regims.Целевое_программирование)
+            if (Flag == Regims.Сужение_множества_Парето || Flag == Regims.Целевое_программирование || Flag == Regims.Подход_MAUT)
             {
                 FillWeights(critCnt);
             }
@@ -52,6 +52,10 @@ namespace ParetoSet
             else if (Flag == Regims.Метод_анализа_иерархий)
             {
                 МетодАнализаИерархий(matrix);
+            }
+            else if (Flag == Regims.Подход_MAUT)
+            {
+                MAUT(matrix);
             }
 
         end:
@@ -193,7 +197,8 @@ namespace ParetoSet
             Console.WriteLine("2. Сужение множества Парето");
             Console.WriteLine("3. Целевое программирование");
             Console.WriteLine("4. Метод анализа иерархий");
-            Console.WriteLine("Для выбора введите 1, 2, 3 или 4 соответственно, ввод других символов приведет к завершению работы");
+            Console.WriteLine("5. Подход MAUT");
+            Console.WriteLine("Для выбора введите 1, 2, 3, 4 или 5 соответственно, ввод других символов приведет к завершению работы");
             string input = Console.ReadLine().Trim();
             if (!int.TryParse(input, out int reg))
             {
@@ -213,6 +218,9 @@ namespace ParetoSet
                     break;
                 case 4:
                     Flag = Regims.Метод_анализа_иерархий;
+                    break;
+                case 5:
+                    Flag = Regims.Подход_MAUT;
                     break;
                 default:
                     Flag = null;
@@ -365,12 +373,58 @@ namespace ParetoSet
             Console.WriteLine();
         }
 
+        private static void MAUT(List<List<double>> matrix)
+        {
+            //транспонируем матрицу для облегчения нахождения коэффициентов
+            var mtrx = GetMatrixFromListOfLists(matrix);
+            Console.WriteLine("Введена матрица:");
+            PrintMatrix(mtrx);
+
+            var matrixTrans = mtrx.Transpose();
+
+            for (int i = 0; i < matrixTrans.Rows; i++)
+            {
+                Console.WriteLine("Обработка стобца: " + (i + 1));
+                for (int j = 0; j < matrixTrans.Columns; j++)
+                {
+                    Console.WriteLine("Введите значение функции полезности для элемента " + matrixTrans[i, j]);
+
+                    string input = Console.ReadLine();
+                    if (!double.TryParse(input, out double result))
+                    {
+                        Console.WriteLine("Ввод некорректен");
+                        j -= 1;
+                        continue;
+                    }
+                    matrixTrans[i, j] = result;
+                }
+            }
+
+            mtrx = matrixTrans.Transpose();
+            var finalResult = new List<double>();
+
+            Console.WriteLine("Умножение на веса критериев...");
+            for (int i = 0; i < mtrx.Rows; i++)
+            {
+                double sum = 0;
+                for (int j = 0; j < mtrx.Columns; j++)
+                {
+                    sum += mtrx[i, j] * Weights[j];
+                }
+                finalResult.Add(sum);
+            }
+            Console.WriteLine("Результаты: ");
+            int k = 0;
+            finalResult.ForEach(f => Console.WriteLine($"U({k++}) = {f}"));
+        }
+
         public enum Regims
         {
             Алгоритм_Парето,
             Сужение_множества_Парето,
             Целевое_программирование,
-            Метод_анализа_иерархий
+            Метод_анализа_иерархий,
+            Подход_MAUT
         }
 
 
