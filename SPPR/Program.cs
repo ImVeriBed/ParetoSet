@@ -18,7 +18,7 @@ namespace ParetoSet
             var critCnt = FillCritCnt();
 
             //Ввод весов критериев
-            if (Flag == Regims.Сужение_множества_Парето || Flag == Regims.Целевое_программирование || Flag == Regims.Подход_MAUT)
+            if (Flag == Regims.Сужение_множества_Парето || Flag == Regims.Целевое_программирование || Flag == Regims.Подход_MAUT || Flag == Regims.Принятие_решений_в_условиях_риска)
             {
                 FillWeights(critCnt);
             }
@@ -31,31 +31,38 @@ namespace ParetoSet
             }
 
             //Ввод значений векторов
-            var matrix = FillMatrix(critCnt, vectorCnt);          
-          
-            if (Flag == Regims.Сужение_множества_Парето || Flag == Regims.Алгоритм_Парето)
+            var matrix = FillMatrix(critCnt, vectorCnt);
+
+            switch (Flag)
             {
-                Console.WriteLine("Результат: ");
-                var paretoSet = GetParetoSet(matrix);
-                if (Flag == Regims.Сужение_множества_Парето) Console.WriteLine("Элементы векторов домножены на веса");
-                for (int i = 0; i < paretoSet.Count; i++)
-                {
-                    Console.Write($"Вектор {i + 1}: (");
-                    Console.Write(string.Join(", ", paretoSet[i]));
-                    Console.WriteLine(")");
-                }
-            }
-            else if (Flag == Regims.Целевое_программирование)
-            {
-                ЦелевоеПрограммирование(matrix, critCnt);
-            }
-            else if (Flag == Regims.Метод_анализа_иерархий)
-            {
-                МетодАнализаИерархий(matrix);
-            }
-            else if (Flag == Regims.Подход_MAUT)
-            {
-                MAUT(matrix);
+                case Regims.Сужение_множества_Парето:
+                case Regims.Алгоритм_Парето:
+                    {
+                        Console.WriteLine("Результат: ");
+                        var paretoSet = GetParetoSet(matrix);
+                        if (Flag == Regims.Сужение_множества_Парето) Console.WriteLine("Элементы векторов домножены на веса");
+                        for (int i = 0; i < paretoSet.Count; i++)
+                        {
+                            Console.Write($"Вектор {i + 1}: (");
+                            Console.Write(string.Join(", ", paretoSet[i]));
+                            Console.WriteLine(")");
+                        }
+
+                        break;
+                    }
+
+                case Regims.Целевое_программирование:
+                    ЦелевоеПрограммирование(matrix, critCnt);
+                    break;
+                case Regims.Метод_анализа_иерархий:
+                    МетодАнализаИерархий(matrix);
+                    break;
+                case Regims.Подход_MAUT:
+                    MAUT(matrix);
+                    break;
+                case Regims.Принятие_решений_в_условиях_риска:
+                    ПринятиеРешенийВУсловияхРиска(matrix);
+                    break;
             }
 
         end:
@@ -66,7 +73,10 @@ namespace ParetoSet
         private static int FillCritCnt()
         {
         critCnt:
-            Console.WriteLine("Введите количество критериев");
+            if (Flag != Regims.Принятие_решений_в_условиях_риска)
+                Console.WriteLine("Введите количество критериев");
+            else
+                Console.WriteLine("Введите количество состояний среды");
             if (int.TryParse(Console.ReadLine(), out int result))
             {
                 return result;
@@ -81,7 +91,10 @@ namespace ParetoSet
         private static int FillCaseCnt()
         {
         caseCnt:
-            Console.WriteLine("Введите количество векторов");
+            if (Flag != Regims.Принятие_решений_в_условиях_риска)
+                Console.WriteLine("Введите количество векторов");
+            else
+                Console.WriteLine("Введите количество элементов во множестве вариантов решения");
             if (int.TryParse(Console.ReadLine(), out int result))
             {
                 return result;
@@ -99,14 +112,21 @@ namespace ParetoSet
             for (int i = 0; i < vectorCnt; i++)
             {
                 var currentVector = new List<double>();
-                Console.WriteLine($"Заполните вектор {i + 1} (через Enter)");
+                if (Flag != Regims.Принятие_решений_в_условиях_риска)
+                    Console.WriteLine($"Заполните вектор {i + 1} (через Enter)");
+                else
+                    Console.WriteLine($"Заполните значение состояний для варианта решения {i + 1} (через Enter)");
                 for (int j = 0; j < critCnt; j++)
                 {
                 error:
-                    Console.WriteLine($"Заполните критерий {j + 1}");
+                    if (Flag != Regims.Принятие_решений_в_условиях_риска)
+                        Console.WriteLine($"Заполните критерий {j + 1}");
+                    else
+                        Console.WriteLine($"Введите значение состояния {j + 1}");
+
                     if (double.TryParse(Console.ReadLine(), out double result))
                     {
-                        if (Flag == Regims.Сужение_множества_Парето || Flag == Regims.Целевое_программирование)
+                        if (Flag == Regims.Сужение_множества_Парето || Flag == Regims.Целевое_программирование || Flag == Regims.Принятие_решений_в_условиях_риска)
                         {
                             result *= Weights[j];
                         }
@@ -198,7 +218,10 @@ namespace ParetoSet
             Console.WriteLine("3. Целевое программирование");
             Console.WriteLine("4. Метод анализа иерархий");
             Console.WriteLine("5. Подход MAUT");
-            Console.WriteLine("Для выбора введите 1, 2, 3, 4 или 5 соответственно, ввод других символов приведет к завершению работы");
+            Console.WriteLine("6. Принятие решений в условиях риска");
+            Console.WriteLine("Для выбора введите цифру, соответствующую нужному режиму работы");
+            Console.WriteLine("Ввод других символов приведет к завершению работы");
+
             string input = Console.ReadLine().Trim();
             if (!int.TryParse(input, out int reg))
             {
@@ -222,6 +245,9 @@ namespace ParetoSet
                 case 5:
                     Flag = Regims.Подход_MAUT;
                     break;
+                case 6:
+                    Flag = Regims.Принятие_решений_в_условиях_риска;
+                    break;
                 default:
                     Flag = null;
                     break;
@@ -233,7 +259,10 @@ namespace ParetoSet
             Weights = new List<double>();
             for (int i = 0; i < critCnt; i++)
             {
-                Console.WriteLine($"Введите вес критерия номер {i + 1}") ;
+                if (Flag != Regims.Принятие_решений_в_условиях_риска)
+                    Console.WriteLine($"Введите вес критерия номер {i + 1}");
+                else
+                    Console.WriteLine($"Введите вероятность состояния {i + 1}");
                 if (double.TryParse(Console.ReadLine(), out double input))
                     Weights.Add(input);
                 else
@@ -266,7 +295,7 @@ namespace ParetoSet
             int number = 0;
             for (int j = 0; j < matrix.Count; j++)
             {
-                double localResult = 0;               
+                double localResult = 0;
                 for (int i = 0; i < matrix[j].Count; i++)
                 {
                     localResult += Math.Pow(matrix[j][i] - zetSet[i], 2);
@@ -329,7 +358,7 @@ namespace ParetoSet
 
             // нормировать полученные значения
             var W = A.Solve(B);
-            
+
             var summa = 0.0;
 
             for (int i = 0; i < A.Rows; i++)
@@ -418,13 +447,46 @@ namespace ParetoSet
             finalResult.ForEach(f => Console.WriteLine($"U({k++}) = {f}"));
         }
 
+        private static void ПринятиеРешенийВУсловияхРиска(List<List<double>> matrix)
+        {
+            Console.WriteLine();
+            double max = 0;
+            double min = 0;
+            for (int i = 0; i < matrix.Count; i++)
+            {
+                double sum = 0;
+                matrix[i].ForEach(e => sum += e);
+                Console.WriteLine($"H(d{i}) = {sum}");
+                if (i == 0)
+                {
+                    max = sum;
+                    min = sum;
+                }
+                else
+                {
+                    if (sum > max)
+                    {
+                        max = sum;
+                    }
+                    else if(sum < min)
+                    {
+                        min = sum;
+                    }
+                }
+            }
+            Console.WriteLine();
+            Console.WriteLine("Используя критерий ожидаемой полезности победило значение " + max);
+            Console.WriteLine("Используя критерий дисперсии полезности победило значение " + min);
+        }
+
         public enum Regims
         {
             Алгоритм_Парето,
             Сужение_множества_Парето,
             Целевое_программирование,
             Метод_анализа_иерархий,
-            Подход_MAUT
+            Подход_MAUT,
+            Принятие_решений_в_условиях_риска
         }
 
 
