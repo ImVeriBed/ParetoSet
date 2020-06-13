@@ -37,20 +37,8 @@ namespace ParetoSet
             {
                 case Regims.Сужение_множества_Парето:
                 case Regims.Алгоритм_Парето:
-                    {
-                        Console.WriteLine("Результат: ");
-                        var paretoSet = GetParetoSet(matrix);
-                        if (Flag == Regims.Сужение_множества_Парето) Console.WriteLine("Элементы векторов домножены на веса");
-                        for (int i = 0; i < paretoSet.Count; i++)
-                        {
-                            Console.Write($"Вектор {i + 1}: (");
-                            Console.Write(string.Join(", ", paretoSet[i]));
-                            Console.WriteLine(")");
-                        }
-
-                        break;
-                    }
-
+                    Парето(matrix);
+                    break;
                 case Regims.Целевое_программирование:
                     ЦелевоеПрограммирование(matrix, critCnt);
                     break;
@@ -62,6 +50,9 @@ namespace ParetoSet
                     break;
                 case Regims.Принятие_решений_в_условиях_риска:
                     ПринятиеРешенийВУсловияхРиска(matrix);
+                    break;
+                case Regims.Принятие_решений_в_условиях_неопределенности:
+                    ПринятиеРешенийВУсловияхНеопределенности(matrix);
                     break;
             }
 
@@ -144,6 +135,19 @@ namespace ParetoSet
             return resultSet;
         }
 
+        public static void Парето(List<List<double>> matrix)
+        {
+            Console.WriteLine("Результат: ");
+            var paretoSet = GetParetoSet(matrix);
+            if (Flag == Regims.Сужение_множества_Парето) Console.WriteLine("Элементы векторов домножены на веса");
+            for (int i = 0; i < paretoSet.Count; i++)
+            {
+                Console.Write($"Вектор {i + 1}: (");
+                Console.Write(string.Join(", ", paretoSet[i]));
+                Console.WriteLine(")");
+            }
+        }
+
         private static List<List<double>> GetParetoSet(List<List<double>> matrix)
         {
             var paretoSet = new List<List<double>>();
@@ -219,6 +223,7 @@ namespace ParetoSet
             Console.WriteLine("4. Метод анализа иерархий");
             Console.WriteLine("5. Подход MAUT");
             Console.WriteLine("6. Принятие решений в условиях риска");
+            Console.WriteLine("7. Принятие решений в условиях неопределенности");
             Console.WriteLine("Для выбора введите цифру, соответствующую нужному режиму работы");
             Console.WriteLine("Ввод других символов приведет к завершению работы");
 
@@ -247,6 +252,9 @@ namespace ParetoSet
                     break;
                 case 6:
                     Flag = Regims.Принятие_решений_в_условиях_риска;
+                    break;
+                case 7:
+                    Flag = Regims.Принятие_решений_в_условиях_неопределенности;
                     break;
                 default:
                     Flag = null;
@@ -479,6 +487,11 @@ namespace ParetoSet
             Console.WriteLine("Используя критерий дисперсии полезности победило значение " + min);
         }
 
+        private static void ПринятиеРешенийВУсловияхНеопределенности(List<List<double>> matrix)
+        {
+
+        }
+
         public enum Regims
         {
             Алгоритм_Парето,
@@ -486,7 +499,8 @@ namespace ParetoSet
             Целевое_программирование,
             Метод_анализа_иерархий,
             Подход_MAUT,
-            Принятие_решений_в_условиях_риска
+            Принятие_решений_в_условиях_риска,
+            Принятие_решений_в_условиях_неопределенности,
         }
 
 
