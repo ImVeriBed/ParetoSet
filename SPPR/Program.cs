@@ -224,6 +224,7 @@ namespace ParetoSet
             Console.WriteLine("5. Подход MAUT");
             Console.WriteLine("6. Принятие решений в условиях риска");
             Console.WriteLine("7. Принятие решений в условиях неопределенности");
+            Console.WriteLine();
             Console.WriteLine("Для выбора введите цифру, соответствующую нужному режиму работы");
             Console.WriteLine("Ввод других символов приведет к завершению работы");
 
@@ -476,7 +477,7 @@ namespace ParetoSet
                     {
                         max = sum;
                     }
-                    else if(sum < min)
+                    else if (sum < min)
                     {
                         min = sum;
                     }
@@ -489,6 +490,102 @@ namespace ParetoSet
 
         private static void ПринятиеРешенийВУсловияхНеопределенности(List<List<double>> matrix)
         {
+            Console.WriteLine("Введена матрица:");
+            PrintMatrix(GetMatrixFromListOfLists(matrix));
+
+            #region Критерий ММ и критерий B-L
+            Console.WriteLine("Критерий ММ:");
+            var minItems = new List<double>();
+            var avgItems = new List<double>();
+            int i = 0;
+            foreach (var row in matrix)
+            {
+                i++;
+                double minItem = row[0];
+                double avgItem = 0;
+                double sum = 0;
+                foreach (var item in row)
+                {
+                    minItem = item < minItem ? item : minItem;
+                    sum += item;
+                }
+
+                avgItem = sum / row.Count;
+                avgItems.Add(avgItem);
+                minItems.Add(minItem);
+                Console.WriteLine($"Минимальное значение в {i}-й строке: {minItem.ToString("0.00")}");
+                Console.WriteLine($"Среднее значение в {i}-й строке:     {avgItem.ToString("0.00")}");
+            }
+            var maxItem = minItems[0];
+            minItems.ForEach(item => maxItem = item > maxItem ? item : maxItem);
+            Console.WriteLine();
+            Console.WriteLine("Результат ММ:  " + maxItem.ToString("0.00"));
+            Console.WriteLine();
+            avgItems.ForEach(item => maxItem = item > maxItem ? item : maxItem);
+            Console.WriteLine("Результат B-L: " + maxItem.ToString("0.00"));
+            #endregion
+
+            #region Критерий Гурвица
+            Console.WriteLine("Критерий Гурвица (при C = 0,5):" +  Environment.NewLine);
+            var sumItems = new List<double>();
+            i = 0;
+            foreach (var row in matrix)
+            {
+                i++;
+                double minItem = row[0];
+                maxItem = row[0];
+                foreach (var item in row)
+                {
+                    minItem = item <= minItem ? item : minItem;
+                    maxItem = item >= maxItem ? item : maxItem;
+                }
+                minItem *= 0.5;
+                maxItem *= 1 - 0.5;
+
+                sumItems.Add(minItem + maxItem);
+                Console.WriteLine($"Минимальное значение * 0.5 в {i}-й строке: {minItem.ToString("0.00")} {Environment.NewLine}");
+                Console.WriteLine($"Максимальное значение * (1 - 0.5) в {i}-й строке: {maxItem.ToString("0.00")} {Environment.NewLine}");
+                Console.WriteLine($"Суммарное значение: {sumItems[i - 1].ToString("0.00")} {Environment.NewLine}");
+            }
+            maxItem = sumItems[0];
+            sumItems.ForEach(item => maxItem = item > maxItem ? item : maxItem);
+            Console.WriteLine();    
+            Console.WriteLine("Результат по критерию Гурвица: " + maxItem.ToString("0.00") + Environment.NewLine);
+            #endregion
+
+            #region Ходжа-Лемана
+            Console.WriteLine("Критерий Ходжа-Лемана (при q = 0,33; v = 0,5):" + Environment.NewLine);
+            Console.WriteLine("Домножение средних значений на v...");
+            for (int n = 0; n < avgItems.Count; n++)
+            {
+                avgItems[n] *= 0.5;
+            }
+            Console.WriteLine("Домножение минимальных значений на (1 - v)...");
+
+            for (int n = 0; n < minItems.Count; n++)
+            {
+                minItems[n] *= 1 - 0.5;
+            }
+
+            double resultItem = 0;
+            for (int k = 0; k < avgItems.Count; k++)
+            {
+                double bufferValue = avgItems[k] + minItems[k];
+                if (k == 0)
+                {
+                    resultItem = bufferValue;
+                }
+                else
+                {
+                    if (bufferValue > resultItem)
+                        resultItem = bufferValue;
+                }
+                
+            }
+            Console.WriteLine("Результат: " + resultItem.ToString("0.00"));
+
+            #endregion
+
 
         }
 
